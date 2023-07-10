@@ -1,0 +1,66 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the movie data into a Pandas DataFrame
+movie_data = pd.read_csv('movie_data.csv')
+
+# Perform data preprocessing
+# Drop irrelevant columns
+movie_data = movie_data.drop(['movie_id', 'release_date'], axis=1)
+
+# Handle missing values
+movie_data = movie_data.dropna()
+
+# Encode categorical variables
+le = LabelEncoder()
+movie_data['genre'] = le.fit_transform(movie_data['genre'])
+movie_data['director'] = le.fit_transform(movie_data['director'])
+movie_data['studio'] = le.fit_transform(movie_data['studio'])
+
+# Split the data into features and target variable
+X = movie_data.drop('success', axis=1)
+y = movie_data['success']
+
+# Scale the features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Create and train a Random Forest Classifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Perform predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+classification_report = classification_report(y_test, y_pred)
+
+# Print the evaluation results
+print('Accuracy:', accuracy)
+print('Classification Report:\n', classification_report)
+
+# Feature importance analysis
+importance = model.feature_importances_
+feature_names = X.columns
+
+# Sort the feature importances in descending order
+indices = np.argsort(importance)[::-1]
+
+# Visualize the feature importances
+plt.figure(figsize=(10, 6))
+sns.barplot(x=importance[indices], y=feature_names[indices])
+plt.title('Feature Importances')
+plt.xlabel('Importance')
+plt.ylabel('Features')
+plt.xticks(rotation=90)
+plt.show()
